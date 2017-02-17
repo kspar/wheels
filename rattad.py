@@ -14,6 +14,22 @@ def msg_should_have_used_input():
     return "Selles ülesandes on vaja kasutaja käest andmeid küsida, selleks tuleb 'input()' funktsiooni kasutada."
 
 
+def msg_should_have_func_call_toplevel(func_name):
+    return "Programmi välimisel tasemel tuleb funktsiooni '{func}' välja kutsuda.".format(func=func_name)
+
+
+def msg_should_have_while():
+    return "Selles ülesandes on vaja while-tsüklit kasutada."
+
+
+def msg_should_have_for():
+    return "Selles ülesandes on vaja for-tsüklit kasutada."
+
+
+def msg_should_have_loop():
+    return "Selles ülesandes on vaja tsüklit kasutada."
+
+
 def msg_should_have_func_def(func_name):
     return "Programmis peaks olema defineeritud funktsioon '{func}'. Ei leidnud selle funktsiooni definitsiooni.".format(
         func=func_name)
@@ -141,6 +157,10 @@ def must_have_input(node):
     assert name_in_ast(node, "input"), msg_should_have_used_input()
 
 
+def must_have_function_call_toplevel(node, fname):
+    assrt(ast_contains_function_call(node, fname), msg_should_have_func_call_toplevel(fname))
+
+
 def must_have_nested_function_call(outer_func_def_node, inner_func_name):
     assert ast_contains_function_call(outer_func_def_node, inner_func_name), \
         msg_inner_function_call_missing(outer_func_def_node.name, inner_func_name)
@@ -157,6 +177,17 @@ def ast_contains_function_call(node, callee_name):
             return True
     return False
 
+def must_have_loop_while(node):
+    assrt(ast_contains(node, ast.While), msg_should_have_while())
+
+
+def must_have_loop_for(node):
+    assrt(ast_contains(node, ast.For), msg_should_have_for())
+
+
+def must_have_loop(node):
+    assrt(ast_contains(node, ast.While) or ast_contains(node, ast.For), msg_should_have_loop())
+
 
 def write_dummy_data(stdin, stdout, dummy=['1337']*10): 
     for d in dummy[:-1]:
@@ -167,7 +198,6 @@ def write_dummy_data(stdin, stdout, dummy=['1337']*10):
 
 def must_have_func_def_toplevel(module, fname):
     # TODO: add non-top-level checking as a separate function
-
     assert hasattr(module, fname), msg_should_have_func_def(fname)
 
 
