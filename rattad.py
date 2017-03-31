@@ -256,7 +256,7 @@ def must_have_func_def_toplevel(module_, function_name: str):
     assrt(hasattr(module_, function_name), msg_should_have_func_def(function_name))
 
 
-def get_function(module_, function_name: str) -> function:
+def get_function(module_, function_name: str) -> Callable:
     """
     Get Python function object named function_name. Currently this function must be defined on top level.
     :param module_: python-grader's m.module object 
@@ -294,8 +294,8 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
           msg_wrong_number_of_params(func_def_node.name, no_of_params, len(func_def_node.args.args)))
 
 
-def must_have_equal_return_values(expected_func_object: function, actual_func_object: function, function_name: str, *func_args: Any,
-                                  equalizer: function = equal_simple, ret_representer: function = quote, args_repr: str = None):
+def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *func_args: Any,
+                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None):
     """
     Check if two given Python function objects have equal return values when provided with *func_args.
     
@@ -335,7 +335,7 @@ def must_have_equal_return_values(expected_func_object: function, actual_func_ob
                                    ret_representer(actual_return))
 
 
-def must_have_pure_func(expected_func_object: function, actual_func_object: function, function_name: str,
+def must_have_pure_func(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
                         real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote, args_repr=None):
     """
     Use real and mock arguments to check if a given student function is pure (referentially transparent).
@@ -375,8 +375,8 @@ def must_have_pure_func(expected_func_object: function, actual_func_object: func
                                                                             ret_representer(expected_return), ret_representer(actual_return)))
 
 
-def must_have_correct_random_return_value(actual_func_object: function, function_name: str, func_args: List[Any],
-                                          validation_function: function, uniqueness_function: function = at_least_2_unique, samples: int = 100):
+def must_have_correct_random_return_value(actual_func_object: Callable, function_name: str, func_args: List[Any],
+                                          validation_function: Callable, uniqueness_function: Callable = at_least_2_unique, samples: int = 100):
     """
     Run the given function samples times. Check if each return value is valid using validation_function and
     if the return values are 'random enough' using uniqueness_function.
@@ -402,7 +402,7 @@ def must_have_correct_random_return_value(actual_func_object: function, function
 
 
 def must_have_correct_output_str(stdin, stdout, inputs: List[Any], expected_strings: List[str], unexpected_strings: List[str],
-                                 exp_out_representer: function = quote, act_out_representer: function = quote, ignore_case: bool = True):
+                                 exp_out_representer: Callable = quote, act_out_representer: Callable = quote, ignore_case: bool = True):
     """
     Write inputs to stdin. Read stdout. Check if all strings in expected_strings are contained in out.
     Check if none of the strings in unexpected_strings are contained in out.
