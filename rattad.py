@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import ast
+from typing import List, Callable, Any
 from functools import reduce
 from grader import *
 
@@ -60,6 +61,11 @@ def msg_wrong_return_value(func_name, args_repr, exp_ret, act_ret):
     return "Andsin funktsioonile '{func_name}' argumendiks {args_repr} ja ootasin, et see tagastaks " \
            "{exp_ret} kuid see tagastas {act_ret}".format(func_name=func_name, args_repr=args_repr, exp_ret=exp_ret,
                                                           act_ret=act_ret)
+
+
+def msg_nonpure_function(func_name):
+    return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. Kui teised testid lähevad läbi, " \
+           "siis võib probleem olla selles, et kasutate funktsioonis argumentide asemel globaalseid muutujaid.".format(func_name=func_name)
 
 
 def msg_wrong_number_of_params(func_name, exp_no_of_params, act_no_of_params):
@@ -177,6 +183,7 @@ def ast_contains_function_call(node, callee_name):
             return True
     return False
 
+
 def must_have_loop_while(node):
     assrt(ast_contains(node, ast.While), msg_should_have_while())
 
@@ -189,7 +196,7 @@ def must_have_loop(node):
     assrt(ast_contains(node, ast.While) or ast_contains(node, ast.For), msg_should_have_loop())
 
 
-def write_dummy_data(stdin, stdout, dummy=['1337']*10): 
+def write_dummy_data(stdin, stdout, dummy=['1337'] * 10):
     for d in dummy[:-1]:
         stdin.write(d)
     stdout.reset()
@@ -235,8 +242,7 @@ def must_have_equal_return_values(expected_func_object, actual_func_object, func
 
     if expected_return is None:
         # we expect the student function to 'not return anything'
-        assert actual_return is None, msg_should_have_returned_none(function_name, args_repr,
-                                                                    ret_representer(actual_return))
+        assert actual_return is None, msg_should_have_returned_none(function_name, args_repr, ret_representer(actual_return))
     else:
         assert actual_return is not None, msg_should_not_have_returned_none(function_name)
         # should this be (actual_return == expected_return) == (str(..) == str(..)) ?
@@ -244,6 +250,37 @@ def must_have_equal_return_values(expected_func_object, actual_func_object, func
         assert equalizer(actual_return, expected_return), \
             msg_wrong_return_value(function_name, args_repr, ret_representer(expected_return),
                                    ret_representer(actual_return))
+
+
+def must_have_pure_func(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
+                        real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote, args_repr=None):
+    """
+    Uses real and mock arguments to check if a given student function is pure (referentially transparent).
+    The same mock args should be provided to the student program beforehand.
+    The student function actual_func_object is considered to be nonpure iff
+    equalizer(actual_func_object(*real_args), expected_func_object(*mock_args)).
+    Otherwise the student function is considered as correct or incorrect based on its return value.
+    NB! expected_func_object(*real_args) must NOT return None!
+    """
+    expected_return = expected_func_object(*real_args)
+    actual_return = actual_func_object(*real_args)
+    expected_mock_return = expected_func_object(*mock_args)
+
+    if args_repr is None:
+        # TODO: should this use repr or str?
+        args_repr = reduce(lambda a1, a2: repr(a1) + ', ' + repr(a2), real_args)
+
+    assert expected_return is not None, 'Solution function should not return None'
+
+    # Student function should not return None
+    assrt(actual_return is not None, msg_should_not_have_returned_none(function_name))
+    # Check if student function is nonpure
+    assrt(not equalizer(actual_return, expected_mock_return), msg_nonpure_function(function_name))
+    # Check if student function's return type is correct
+    assrt(isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name))
+    # Check if student function's return value is correct
+    assrt(equalizer(actual_return, expected_return), msg_wrong_return_value(function_name, args_repr,
+                                                                            ret_representer(expected_return), ret_representer(actual_return)))
 
 
 def must_have_correct_random_return_value(actual_func_object, function_name, func_args,
@@ -284,3 +321,19 @@ def must_have_correct_output_str(stdin, stdout, inputs, expected_strings, unexpe
         else:
             assert unexp not in out, msg_found_unexpected_string_from_out(exp_out_representer(unexp),
                                                                           act_out_representer(out))
+
+
+def write_inputs(stdin, stdout, inputs: List[str]):
+    """
+    Write inputs to stdin. Reset output stream after writing.
+    """
+
+    # write all but the last input
+    if len(inputs) > 1:
+        for inp in inputs[:-1]:
+            stdin.write(inp)
+
+    if len(inputs) > 0:
+        # if there was inputs, reset stdout and write last one since others were written already
+        stdout.reset()
+        stdin.write(inputs[-1])
