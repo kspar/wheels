@@ -295,7 +295,7 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
 
 
 def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *func_args: Any,
-                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None):
+                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True):
     """
     Check if two given Python function objects have equal return values when provided with *func_args.
     
@@ -328,15 +328,16 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
         assert actual_return is None, msg_should_have_returned_none(function_name, args_repr, ret_representer(actual_return))
     else:
         assert actual_return is not None, msg_should_not_have_returned_none(function_name)
-        # should this be (actual_return == expected_return) == (str(..) == str(..)) ?
-        assert isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name)
+        if check_return_type:
+            # should this be (actual_return == expected_return) == (str(..) == str(..)) ?
+            assert isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name)
         assert equalizer(actual_return, expected_return), \
             msg_wrong_return_value(function_name, args_repr, ret_representer(expected_return),
                                    ret_representer(actual_return))
 
 
 def must_have_pure_func(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
-                        real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote, args_repr=None):
+                        real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote, args_repr=None, check_return_type: bool = True):
     """
     Use real and mock arguments to check if a given student function is pure (referentially transparent).
     The same mock args should be provided to the student program beforehand.
@@ -368,8 +369,9 @@ def must_have_pure_func(expected_func_object: Callable, actual_func_object: Call
     assrt(actual_return is not None, msg_should_not_have_returned_none(function_name))
     # Check if student function is nonpure
     assrt(not equalizer(actual_return, expected_mock_return), msg_nonpure_function(function_name))
-    # Check if student function's return type is correct
-    assrt(isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name))
+    if check_return_type:
+        # Check if student function's return type is correct
+        assrt(isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name))
     # Check if student function's return value is correct
     assrt(equalizer(actual_return, expected_return), msg_wrong_return_value(function_name, args_repr,
                                                                             ret_representer(expected_return), ret_representer(actual_return)))
