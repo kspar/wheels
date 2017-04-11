@@ -267,6 +267,10 @@ def get_function(module_, function_name: str) -> Callable:
     return getattr(module_, function_name)
 
 
+def function_exists(module_, function_name):
+    return hasattr(module_, function_name)
+
+
 def get_function_def_node(node: ast.AST, function_name: str) -> ast.FunctionDef:
     """
     Fetch function def AST node of function_name from subtree with root node.
