@@ -42,8 +42,8 @@ def msg_should_not_have_more_than_one_def(func_name):
 
 
 def msg_should_have_returned_none(func_name, args_repr, ret_repr):
-    return "Andsin funktsioonile '{func_name}' argumendiks {args_repr} ja ootasin, et see ei ' \
-           'tagastaks mitte midagi. Kuid funktsioon tagastas {ret_repr}".format(func_name=func_name,
+    return "Andsin funktsioonile '{func_name}' argumendiks {args_repr} ja ootasin, et see ei " \
+           "tagastaks mitte midagi. Kuid funktsioon tagastas {ret_repr}".format(func_name=func_name,
                                                                                 args_repr=args_repr, ret_repr=ret_repr)
 
 
@@ -104,6 +104,13 @@ def msg_illegal_return_value_from_random(func_name, actual_ret):
     # TODO: make tööle n > 0 argumendiga
     return "Funktsioon '{func_name}' tagastas ebakorrektse väärtuse: {act_ret}".format(func_name=func_name,
                                                                                        act_ret=actual_ret)
+
+def msg_should_be_argument_object(func_name):
+    return "Ootasin, et funktsioon '{}' muteeriks ja tagastaks argumendiks antud objekti, mitte ei tagastaks uut objekti.".format(func_name)
+
+
+def msg_should_not_be_argument_object(func_name):
+    return "Ootasin, et funktsioon '{}' tagastaks uue objekti, mitte ei muteeriks argumendiks antud objekti.".format(func_name)
 
 
 ### LOW-LEVEL
@@ -298,8 +305,11 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
           msg_wrong_number_of_params(func_def_node.name, no_of_params, len(func_def_node.args.args)))
 
 
+
+
 def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *func_args: Any,
-                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True):
+                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True,
+                                  return_id: int = None, not_return_id: int = None):
     """
     Check if two given Python function objects have equal return values when provided with *func_args.
     
@@ -308,8 +318,13 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
     A custom representer can be provided for displaying the (differing) return values. The representer should
     return a string.
     A custom representation of given arguments can be provided as a string. Note that all arguments must be 
-    included in this representation. This can be used for argument types that don't repr() well, i.e. matrices.  
+    included in this representation. This can be used for argument types that don't repr() well, i.e. matrices.
+    An optional return_id must be equal to the id of the returned object.
+    An optional not_return_id must not be equal to the id of the returned object.
     
+    :param not_return_id: 
+    :param return_id: 
+    :param check_return_type: 
     :param expected_func_object: 
     :param actual_func_object: 
     :param function_name: 
@@ -333,11 +348,14 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
     else:
         assert actual_return is not None, msg_should_not_have_returned_none(function_name)
         if check_return_type:
-            # should this be (actual_return == expected_return) == (str(..) == str(..)) ?
             assert isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name)
         assert equalizer(actual_return, expected_return), \
             msg_wrong_return_value(function_name, args_repr, ret_representer(expected_return),
                                    ret_representer(actual_return))
+        if return_id is not None:
+            assrt(id(actual_return) == return_id, msg_should_be_argument_object(function_name))
+        if not_return_id is not None:
+            assrt(id(actual_return) != not_return_id, msg_should_not_be_argument_object(function_name))
 
 
 def must_have_pure_func(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
