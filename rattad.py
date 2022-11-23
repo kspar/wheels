@@ -64,7 +64,7 @@ def msg_wrong_return_value(func_name, args_repr, exp_ret, act_ret):
 
 
 def msg_nonpure_function(func_name):
-    return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. Kui teised testid lähevad läbi, " \
+    return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. \nKui teised testid lähevad läbi, " \
            "siis võib probleem olla selles, et kasutate funktsioonis argumentide asemel globaalseid muutujaid.".format(func_name=func_name)
 
 
@@ -339,8 +339,7 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
     actual_return = actual_func_object(*func_args)
 
     if args_repr is None:
-        # TODO: should this use repr or str?
-        args_repr = reduce(lambda a1, a2: repr(a1) + ', ' + repr(a2), func_args)
+        args_repr = ', '.join(map(repr, func_args))
 
     if expected_return is None:
         # we expect the student function to 'not return anything'
@@ -382,8 +381,7 @@ def must_have_pure_func(expected_func_object: Callable, actual_func_object: Call
     expected_mock_return = expected_func_object(*mock_args)
 
     if args_repr is None:
-        # TODO: should this use repr or str?
-        args_repr = reduce(lambda a1, a2: repr(a1) + ', ' + repr(a2), real_args)
+        args_repr = ', '.join(map(repr, real_args))
 
     assert expected_return is not None, 'Solution function must not return None'
 
