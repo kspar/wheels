@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import ast
+import copy
 from typing import List, Callable, Any
 from functools import reduce
 from grader import *
@@ -64,7 +65,7 @@ def msg_wrong_return_value(func_name, args_repr, exp_ret, act_ret):
 
 
 def msg_nonpure_function(func_name):
-    return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. \nKui teised testid lähevad läbi, " \
+    return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. Kui teised testid lähevad läbi, " \
            "siis võib probleem olla selles, et kasutate funktsioonis argumentide asemel globaalseid muutujaid.".format(func_name=func_name)
 
 
@@ -307,7 +308,7 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
 
 
 
-def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *func_args: Any,
+def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *orig_func_args: Any,
                                   equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True,
                                   return_id: int = None, not_return_id: int = None):
     """
@@ -335,11 +336,13 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
     """
     # TODO: should have a list of args instead of *
     # TODO: handle funcs with no params
-    expected_return = expected_func_object(*func_args)
+    func_args = [copy.deepcopy(arg) for arg in orig_func_args]
+    expected_return = expected_func_object(*orig_func_args)
     actual_return = actual_func_object(*func_args)
 
     if args_repr is None:
-        args_repr = ', '.join(map(repr, func_args))
+        # TODO: should this use repr or str?
+        args_repr = reduce(lambda a1, a2: repr(a1) + ', ' + repr(a2), func_args)
 
     if expected_return is None:
         # we expect the student function to 'not return anything'
@@ -381,7 +384,8 @@ def must_have_pure_func(expected_func_object: Callable, actual_func_object: Call
     expected_mock_return = expected_func_object(*mock_args)
 
     if args_repr is None:
-        args_repr = ', '.join(map(repr, real_args))
+        # TODO: should this use repr or str?
+        args_repr = reduce(lambda a1, a2: repr(a1) + ', ' + repr(a2), real_args)
 
     assert expected_return is not None, 'Solution function must not return None'
 
