@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import ast
+import copy
 from typing import List, Callable, Any
 from functools import reduce
 from grader import *
@@ -307,7 +308,7 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
 
 
 
-def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *func_args: Any,
+def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *orig_func_args: Any,
                                   equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True,
                                   return_id: int = None, not_return_id: int = None):
     """
@@ -335,7 +336,8 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
     """
     # TODO: should have a list of args instead of *
     # TODO: handle funcs with no params
-    expected_return = expected_func_object(*func_args)
+    func_args = [copy.deepcopy(arg) for arg in orig_func_args]
+    expected_return = expected_func_object(*orig_func_args)
     actual_return = actual_func_object(*func_args)
 
     if args_repr is None:
