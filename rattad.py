@@ -4,7 +4,6 @@
 import ast
 import copy
 from typing import List, Callable, Any
-from functools import reduce
 from grader import *
 
 
@@ -58,7 +57,9 @@ def msg_wrong_return_type(func_name):
 
 
 def msg_wrong_return_value(func_name, args_repr, exp_ret, act_ret):
-    # TODO: pane tööle ka 0 argumendi korral
+    if args_repr == '':
+        return f"Kutsusin välja funktsiooni '{func_name}' ja ootasin, et see tagastaks {exp_ret} kuid see tagastas {act_ret}"
+
     return "Andsin funktsioonile '{func_name}' argumendiks {args_repr} ja ootasin, et see tagastaks " \
            "{exp_ret} kuid see tagastas {act_ret}".format(func_name=func_name, args_repr=args_repr, exp_ret=exp_ret,
                                                           act_ret=act_ret)
@@ -66,7 +67,8 @@ def msg_wrong_return_value(func_name, args_repr, exp_ret, act_ret):
 
 def msg_nonpure_function(func_name):
     return "Funktsiooni '{func_name}' programmist väljastpoolt välja kutsudes tagastas see vale väärtuse. \nKui teised testid lähevad läbi, " \
-           "siis võib probleem olla selles, et kasutate funktsioonis argumentide asemel globaalseid muutujaid.".format(func_name=func_name)
+           "siis võib probleem olla selles, et kasutate funktsioonis argumentide asemel globaalseid muutujaid.".format(
+        func_name=func_name)
 
 
 def msg_wrong_number_of_params(func_name, exp_no_of_params, act_no_of_params):
@@ -106,12 +108,15 @@ def msg_illegal_return_value_from_random(func_name, actual_ret):
     return "Funktsioon '{func_name}' tagastas ebakorrektse väärtuse: {act_ret}".format(func_name=func_name,
                                                                                        act_ret=actual_ret)
 
+
 def msg_should_be_argument_object(func_name):
-    return "Ootasin, et funktsioon '{}' muteeriks ja tagastaks argumendiks antud objekti, mitte ei tagastaks uut objekti.".format(func_name)
+    return "Ootasin, et funktsioon '{}' muteeriks ja tagastaks argumendiks antud objekti, mitte ei tagastaks uut objekti.".format(
+        func_name)
 
 
 def msg_should_not_be_argument_object(func_name):
-    return "Ootasin, et funktsioon '{}' tagastaks uue objekti, mitte ei muteeriks argumendiks antud objekti.".format(func_name)
+    return "Ootasin, et funktsioon '{}' tagastaks uue objekti, mitte ei muteeriks argumendiks antud objekti.".format(
+        func_name)
 
 
 ### LOW-LEVEL
@@ -162,7 +167,8 @@ def at_least_2_unique(lst):
 
 def ast_contains_function_call(node, callee_name):
     for node in ast.walk(node):
-        if isinstance(node, ast.Call) and hasattr(node, 'func') and hasattr(node.func, 'id') and node.func.id == callee_name:
+        if (isinstance(node, ast.Call) and hasattr(node, 'func')
+                and hasattr(node.func, 'id') and node.func.id == callee_name):
             return True
     return False
 
@@ -188,7 +194,7 @@ def must_have_input(node: ast.AST):
 
 def must_have_function_call(node: ast.AST, function_name: str):
     """
-    Check subtree for nodes that represent a call to function_name. 
+    Check subtree for nodes that represent a call to function_name.
     :param node: root of subtree
     :param function_name:
     """
@@ -197,9 +203,9 @@ def must_have_function_call(node: ast.AST, function_name: str):
 
 def must_have_nested_function_call(outer_func_def_node: ast.FunctionDef, inner_func_name: str):
     """
-    Check that outer_func_def_node's subtree contains a call to inner_func_name. 
+    Check that outer_func_def_node's subtree contains a call to inner_func_name.
     :param outer_func_def_node: root of subtree
-    :param inner_func_name: name of function that must be called 
+    :param inner_func_name: name of function that must be called
     """
     assrt(ast_contains_function_call(outer_func_def_node, inner_func_name),
           msg_inner_function_call_missing(outer_func_def_node.name, inner_func_name))
@@ -218,7 +224,7 @@ def must_have_recursive_function_call(outer_func_def_node: ast.FunctionDef, func
 def must_have_loop_while(node: ast.AST):
     """
     Check subtree for nodes that represent a while-loop.
-    :param node: root of subtree 
+    :param node: root of subtree
     """
     assrt(ast_contains(node, ast.While), msg_should_have_while())
 
@@ -235,7 +241,7 @@ def must_have_loop_for(node: ast.AST):
 def must_have_loop(node: ast.AST):
     """
     Check subtree for nodes that represent any loop.
-    :param node: root of subtree 
+    :param node: root of subtree
     """
     assrt(ast_contains(node, ast.While) or ast_contains(node, ast.For), msg_should_have_loop())
 
@@ -243,8 +249,8 @@ def must_have_loop(node: ast.AST):
 def write_dummy_data(stdin, stdout, dummy: List[str] = ['1337'] * 10):
     """
     Write dummy data to stdin. This might be needed to stop the student program from blocking or for other reasons.
-    :param stdin: 
-    :param stdout: 
+    :param stdin:
+    :param stdout:
     :param dummy: list of strings that are written to stdin
     """
     for d in dummy[:-1]:
@@ -267,8 +273,8 @@ def must_have_func_def_toplevel(module_, function_name: str):
 def get_function(module_, function_name: str) -> Callable:
     """
     Get Python function object named function_name. Currently this function must be defined on top level.
-    :param module_: python-grader's m.module object 
-    :param function_name: 
+    :param module_: python-grader's m.module object
+    :param function_name:
     :return: corresponding Python function object
     """
     must_have_func_def_toplevel(module_, function_name)
@@ -284,7 +290,7 @@ def get_function_def_node(node: ast.AST, function_name: str) -> ast.FunctionDef:
     Fetch function def AST node of function_name from subtree with root node.
     assrt()s that that there is exactly 1 definition.
     :param node: root of subtree
-    :param function_name: 
+    :param function_name:
     :return: corresponding function def AST node
     """
     defs = []
@@ -298,7 +304,7 @@ def get_function_def_node(node: ast.AST, function_name: str) -> ast.FunctionDef:
 
 def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
     """
-    Checks that func_def_node is defined with exactly no_of_params params. 
+    Checks that func_def_node is defined with exactly no_of_params params.
     :param func_def_node: AST node of function def
     :param no_of_params: number of parameters
     """
@@ -306,33 +312,33 @@ def must_have_n_params(func_def_node: ast.FunctionDef, no_of_params: int):
           msg_wrong_number_of_params(func_def_node.name, no_of_params, len(func_def_node.args.args)))
 
 
-
-
-def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str, *orig_func_args: Any,
-                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote, args_repr: str = None, check_return_type: bool = True,
+def must_have_equal_return_values(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
+                                  *orig_func_args: Any,
+                                  equalizer: Callable = equal_simple, ret_representer: Callable = quote,
+                                  args_repr: str = None, check_return_type: bool = True,
                                   return_id: int = None, not_return_id: int = None):
     """
     Check if two given Python function objects have equal return values when provided with *func_args.
-    
+
     A custom equalizer can be provided for return value equality check (default is ==). The equalizer must
     have 2 params and return a bool.
     A custom representer can be provided for displaying the (differing) return values. The representer should
     return a string.
-    A custom representation of given arguments can be provided as a string. Note that all arguments must be 
+    A custom representation of given arguments can be provided as a string. Note that all arguments must be
     included in this representation. This can be used for argument types that don't repr() well, i.e. matrices.
     An optional return_id must be equal to the id of the returned object.
     An optional not_return_id must not be equal to the id of the returned object.
-    
-    :param not_return_id: 
-    :param return_id: 
-    :param check_return_type: 
-    :param expected_func_object: 
-    :param actual_func_object: 
-    :param function_name: 
-    :param func_args: 
-    :param equalizer: 
-    :param ret_representer: 
-    :param args_repr: 
+
+    :param not_return_id:
+    :param return_id:
+    :param check_return_type:
+    :param expected_func_object:
+    :param actual_func_object:
+    :param function_name:
+    :param func_args:
+    :param equalizer:
+    :param ret_representer:
+    :param args_repr:
     """
     # TODO: should have a list of args instead of *
     # TODO: handle funcs with no params
@@ -345,7 +351,8 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
 
     if expected_return is None:
         # we expect the student function to 'not return anything'
-        assert actual_return is None, msg_should_have_returned_none(function_name, args_repr, ret_representer(actual_return))
+        assert actual_return is None, msg_should_have_returned_none(function_name, args_repr,
+                                                                    ret_representer(actual_return))
     else:
         assert actual_return is not None, msg_should_not_have_returned_none(function_name)
         if check_return_type:
@@ -360,7 +367,8 @@ def must_have_equal_return_values(expected_func_object: Callable, actual_func_ob
 
 
 def must_have_pure_func(expected_func_object: Callable, actual_func_object: Callable, function_name: str,
-                        real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote, args_repr=None, check_return_type: bool = True):
+                        real_args: List[Any], mock_args: List[Any], equalizer=equal_simple, ret_representer=quote,
+                        args_repr=None, check_return_type: bool = True):
     """
     Use real and mock arguments to check if a given student function is pure (referentially transparent).
     The same mock args should be provided to the student program beforehand.
@@ -368,12 +376,12 @@ def must_have_pure_func(expected_func_object: Callable, actual_func_object: Call
     equalizer(actual_func_object(*real_args), expected_func_object(*mock_args)).
     Otherwise the student function is considered as correct or incorrect based on its return value.
     NB! expected_func_object(*real_args) must NOT return None!
-    
-    :param expected_func_object: 
-    :param actual_func_object: 
-    :param function_name: 
-    :param real_args: 
-    :param mock_args: 
+
+    :param expected_func_object:
+    :param actual_func_object:
+    :param function_name:
+    :param real_args:
+    :param mock_args:
     :param equalizer: see must_have_equal_return_values
     :param ret_representer: see must_have_equal_return_values
     :param args_repr: see must_have_equal_return_values
@@ -396,25 +404,27 @@ def must_have_pure_func(expected_func_object: Callable, actual_func_object: Call
         assrt(isinstance(actual_return, expected_return.__class__), msg_wrong_return_type(function_name))
     # Check if student function's return value is correct
     assrt(equalizer(actual_return, expected_return), msg_wrong_return_value(function_name, args_repr,
-                                                                            ret_representer(expected_return), ret_representer(actual_return)))
+                                                                            ret_representer(expected_return),
+                                                                            ret_representer(actual_return)))
 
 
 def must_have_correct_random_return_value(actual_func_object: Callable, function_name: str, func_args: List[Any],
-                                          validation_function: Callable, uniqueness_function: Callable = at_least_2_unique, samples: int = 100):
+                                          validation_function: Callable,
+                                          uniqueness_function: Callable = at_least_2_unique, samples: int = 100):
     """
     Run the given function samples times. Check if each return value is valid using validation_function and
     if the return values are 'random enough' using uniqueness_function.
-    The validation_function will be called with 1 argument - return value of the student function - and is expected to 
+    The validation_function will be called with 1 argument - return value of the student function - and is expected to
     return a bool representing whether the given return value is valid.
     A custom uniqueness_function with 1 parameter and bool return value can be provided. This function will be called
     with a list of all return values of the student function and is expected to return a bool whether the values are
     'unique enough' (default requires at least 2 distinct values).
-    :param actual_func_object: 
-    :param function_name: 
-    :param func_args: 
+    :param actual_func_object:
+    :param function_name:
+    :param func_args:
     :param validation_function: function with 1 parameter and bool return value
-    :param uniqueness_function: 
-    :param samples: 
+    :param uniqueness_function:
+    :param samples:
     """
     return_values = []
     for _ in range(samples):
@@ -425,19 +435,21 @@ def must_have_correct_random_return_value(actual_func_object: Callable, function
     assrt(uniqueness_function(return_values), msg_no_distinct_return_values_from_random(function_name, samples))
 
 
-def must_have_correct_output_str(stdin, stdout, inputs: List[Any], expected_strings: List[str], unexpected_strings: List[str],
-                                 exp_out_representer: Callable = quote, act_out_representer: Callable = quote, ignore_case: bool = True):
+def must_have_correct_output_str(stdin, stdout, inputs: List[Any], expected_strings: List[str],
+                                 unexpected_strings: List[str],
+                                 exp_out_representer: Callable = quote, act_out_representer: Callable = quote,
+                                 ignore_case: bool = True):
     """
     Write inputs to stdin. Read stdout. Check if all strings in expected_strings are contained in out.
     Check if none of the strings in unexpected_strings are contained in out.
-    :param stdin: 
-    :param stdout: 
-    :param inputs: 
-    :param expected_strings: 
-    :param unexpected_strings: 
-    :param exp_out_representer: 
-    :param act_out_representer: 
-    :param ignore_case: 
+    :param stdin:
+    :param stdout:
+    :param inputs:
+    :param expected_strings:
+    :param unexpected_strings:
+    :param exp_out_representer:
+    :param act_out_representer:
+    :param ignore_case:
     """
     # write all but the last input
     if len(inputs) > 1:
@@ -468,9 +480,9 @@ def must_have_correct_output_str(stdin, stdout, inputs: List[Any], expected_stri
 def write_inputs(stdin, stdout, inputs: List[str]):
     """
     Write inputs to stdin. Reset output stream after writing.
-    :param stdin: 
-    :param stdout: 
-    :param inputs: 
+    :param stdin:
+    :param stdout:
+    :param inputs:
     """
     # write all but the last input
     if len(inputs) > 1:
@@ -481,3 +493,55 @@ def write_inputs(stdin, stdout, inputs: List[str]):
         # if there was inputs, reset stdout and write last one since others were written already
         stdout.reset()
         stdin.write(inputs[-1])
+
+
+def must_have_class_with_constructor_fields(root: ast.AST, class_name, constructor_args_count, instance_var_names):
+    check_found_class = False
+    check_found_constructor = False
+    found_fields = []
+
+    for class_node in ast.walk(root):
+        if isinstance(class_node, ast.ClassDef):
+            if class_node.name == class_name:
+                check_found_class = True
+                for function_node in class_node.body:
+                    # constructor
+                    if isinstance(function_node, ast.FunctionDef) and function_node.name == '__init__' and hasattr(
+                            function_node.args, "args"):
+                        check_found_constructor = True
+                        assert len(
+                            function_node.args.args) == constructor_args_count + 1, f"Ootasin, et konstruktor võtaks {constructor_args_count + 1} argumenti (self + väljade väärtused), aga leidsin {len(function_node.args.args)} argumenti" +
+                        for stmt in function_node.body:
+                            # if it's a self field assignment
+                            if (isinstance(stmt, ast.Assign)
+                                    and len(stmt.targets) == 1
+                                    and isinstance(stmt.targets[0], ast.Attribute)
+                                    and hasattr(stmt.targets[0], "attr")
+                                    and hasattr(stmt.targets[0], "value")
+                                    and isinstance(stmt.targets[0].value, ast.Name)
+                                    and stmt.targets[0].value.id == "self"):
+                                field_name = stmt.targets[0].attr
+                                found_fields.append(field_name)
+
+    assert check_found_class, f"Ei leidnud klassi '{class_name}' definitsiooni"
+    assert check_found_constructor, f"Ei leidnud klassist '{class_name}' konstruktorit (__init__)"
+
+    for required_field in instance_var_names:
+        assert required_field in found_fields, f"Ei leinud klassi '{class_name}' konstruktorist väljale '{required_field}' väärtuse omistamist"
+
+
+def create_and_check_instance(class_name, clazz, fields):
+    # fields cannot be dict since we need to preserve order and we don't want kwargs because it'd enforce constructor param names
+
+    # check that assigning to instance fields works as expected
+    field_values = map(lambda f: f[1], fields)
+    instance = clazz(*field_values)
+
+    for i, f in enumerate(fields):
+        field_key = f[0]
+        expected = f[1]
+        actual = getattr(instance, field_key)
+        assert expected == actual, f"Lõin klassist {class_name} uue isendi ja andsin isendiväljale '{field_key}' konstruktori {i + 1}. argumendina väärtuse {repr(expected)}. " \
+                                   f"Ootasin, et isendilt seda uuesti küsides ({class_name}.{field_key}) saaks sama väärtuse, aga sain hoopis {repr(actual)}.)"
+
+    return instance
