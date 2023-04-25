@@ -510,7 +510,7 @@ def must_have_class_with_constructor_fields(root: ast.AST, class_name, construct
                             function_node.args, "args"):
                         check_found_constructor = True
                         assert len(
-                            function_node.args.args) == constructor_args_count + 1, f"Ootasin, et konstruktor võtaks {constructor_args_count + 1} argumenti (self + väljade väärtused), aga leidsin {len(function_node.args.args)} argumenti" +
+                            function_node.args.args) == constructor_args_count + 1, f"Ootasin, et konstruktor võtaks {constructor_args_count + 1} argumenti (self + väljade väärtused), aga leidsin {len(function_node.args.args)} argumenti"
                         for stmt in function_node.body:
                             # if it's a self field assignment
                             if (isinstance(stmt, ast.Assign)
